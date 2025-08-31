@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install)",
+      "Bash(npx playwright:*)",
+      "Bash(npm run typecheck:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm run lint)",
+      "Bash(taskkill:*)",
+      "Bash(npm run dev:full:*)",
+      "Read(c:\\Users\\Lekhana\\Downloads/**)",
+      "Read(c:\\Users\\Lekhana\\Downloads/**)",
+      "Bash(git init:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
