@@ -11,7 +11,10 @@
       "Read(c:\\Users\\Lekhana\\Downloads/**)",
       "Read(c:\\Users\\Lekhana\\Downloads/**)",
       "Bash(git init:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git remote add:*)",
+      "Bash(git branch:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []
