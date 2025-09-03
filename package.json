@@ -11,15 +11,20 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "typecheck": "tsc --noEmit",
     "start": "node server.js",
-    "build:production": "npm run build"
+    "build:production": "npm run build",
+    "postinstall": "npm run build"
   },
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.18.2",
     "lucide-react": "^0.263.1",
     "puppeteer": "^21.11.0",
+    "puppeteer-core": "^21.11.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
+  },
+  "config": {
+    "puppeteer_skip_chromium_download": "true"
   },
   "devDependencies": {
     "@types/cors": "^2.8.13",

@@ -1,15 +1,15 @@
-import puppeteer, { Browser, Page } from 'puppeteer';
-import type { ScrapedData } from '../src/types/index.js';
+const puppeteer = require('puppeteer-core');
 
-let browser: Browser | null = null;
+let browser = null;
 
-async function getBrowser(): Promise<Browser> {
+async function getBrowser() {
   if (!browser) {
-    const launchOptions: any = {
+    browser = await puppeteer.launch({
       headless: true,
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable',
       args: [
-        '--no-sandbox', 
-        '--disable-setuid-sandbox', 
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
         '--disable-web-security',
         '--disable-features=VizDisplayCompositor',
@@ -19,52 +19,36 @@ async function getBrowser(): Promise<Browser> {
       ],
       protocolTimeout: 60000,
       timeout: 60000
-    };
-
-    // Use system Chromium in production environments
-    if (process.env.NODE_ENV === 'production') {
-      launchOptions.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || 
-        '/usr/bin/google-chrome-stable' || 
-        '/usr/bin/google-chrome' || 
-        '/usr/bin/chromium-browser' ||
-        '/usr/bin/chromium';
-    }
-
-    browser = await puppeteer.launch(launchOptions);
+    });
   }
   return browser;
 }
 
-export async function scrapeUrl(url: string): Promise<ScrapedData> {
-  let browserInstance: Browser;
-  let page: Page;
+async function scrapeUrl(url) {
+  let browserInstance;
+  let page;
 
   try {
     browserInstance = await getBrowser();
     page = await browserInstance.newPage();
     await page.setDefaultTimeout(60000);
     
-    // Set user agent to avoid blocking
     await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
     
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
   } catch (error) {
     console.error('Browser setup or navigation failed:', error);
-    // Close browser and create new one if there's an error
     if (browser) {
       await browser.close();
       browser = null;
     }
-    throw new Error(`Failed to load page: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new Error(`Failed to load page: ${error.message}`);
   }
 
   try {
-    
-    // Use Puppeteer's built-in methods
     const title = await page.title();
     const pageUrl = page.url();
     
-    // Get page content using Puppeteer methods
     let content = '';
     try {
       content = await page.evaluate(() => {
@@ -74,8 +58,7 @@ export async function scrapeUrl(url: string): Promise<ScrapedData> {
       console.log('Content extraction failed:', e);
     }
 
-    // Extract images using Puppeteer
-    const images: string[] = [];
+    const images = [];
     try {
       const imageUrls = await page.evaluate(() => {
         const imgs = document.querySelectorAll('img');
@@ -94,8 +77,7 @@ export async function scrapeUrl(url: string): Promise<ScrapedData> {
       console.log('Image extraction failed:', e);
     }
 
-    // Extract links using Puppeteer
-    const links: Array<{text: string; href: string}> = [];
+    const links = [];
     try {
       const extractedLinks = await page.evaluate(() => {
         const linkElements = document.querySelectorAll('a[href]');
@@ -116,7 +98,6 @@ export async function scrapeUrl(url: string): Promise<ScrapedData> {
       console.log('Links extraction failed:', e);
     }
 
-    // Extract metadata using Puppeteer
     const metadata = {
       description: undefined,
       keywords: undefined,
@@ -124,8 +105,7 @@ export async function scrapeUrl(url: string): Promise<ScrapedData> {
       publishDate: undefined
     };
 
-    // Extract circulars from table using Puppeteer
-    const circulars: Array<{title: string; link: string; date?: string; orderNo?: string}> = [];
+    const circulars = [];
     try {
       const extractedCirculars = await page.evaluate(() => {
         const rows = document.querySelectorAll('table tr');
@@ -162,14 +142,14 @@ export async function scrapeUrl(url: string): Promise<ScrapedData> {
       console.log('Circulars extraction failed:', e);
     }
 
-    const scrapedData: ScrapedData = {
+    const scrapedData = {
       title,
       url: pageUrl,
       content,
       images,
       links,
       metadata,
-      circulars // Already limited to 10 during collection
+      circulars
     };
 
     return scrapedData;
@@ -187,11 +167,67 @@ export async function scrapeUrl(url: string): Promise<ScrapedData> {
   }
 }
 
-if (typeof process !== 'undefined') {
-  process.on('SIGINT', async () => {
-    if (browser) {
-      await browser.close();
+exports.handler = async (event, context) => {
+  // Enable CORS
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS'
+  };
+
+  // Handle OPTIONS request for CORS
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers,
+      body: ''
+    };
+  }
+
+  if (event.httpMethod !== 'POST') {
+    return {
+      statusCode: 405,
+      headers,
+      body: JSON.stringify({ success: false, error: 'Method not allowed' })
+    };
+  }
+
+  try {
+    const { url } = JSON.parse(event.body);
+    
+    if (!url) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ success: false, error: 'URL is required' })
+      };
     }
-    process.exit(0);
-  });
-}
+
+    const urlPattern = /^https?:\/\/.+/;
+    if (!urlPattern.test(url)) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ success: false, error: 'Invalid URL format' })
+      };
+    }
+
+    const data = await scrapeUrl(url);
+    
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({ success: true, data })
+    };
+  } catch (error) {
+    console.error('Scraping error:', error);
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ 
+        success: false, 
+        error: error.message || 'Failed to scrape URL' 
+      })
+    };
+  }
+};
