@@ -27,6 +27,18 @@ function App() {
         body: JSON.stringify({ url }),
       });
 
+      // Check if response is ok
+      if (!response.ok) {
+        // Try to parse error response
+        try {
+          const errorResult = await response.json();
+          setError(errorResult.error || `Server error: ${response.status} ${response.statusText}`);
+        } catch {
+          setError(`Server error: ${response.status} ${response.statusText}`);
+        }
+        return;
+      }
+
       const result: ApiResponse = await response.json();
 
       if (result.success && result.data) {
@@ -35,6 +47,7 @@ function App() {
         setError(result.error || 'Failed to scrape URL');
       }
     } catch (err) {
+      // Network connection error (server completely unreachable)
       setError('Network error: Unable to connect to the server');
     } finally {
       setIsLoading(false);

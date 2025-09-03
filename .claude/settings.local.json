@@ -28,7 +28,8 @@
       "Read(c:\\Users\\Lekhana\\Downloads/**)",
       "Bash(.redeploy-heroku.bat)",
       "Bash(cmd /c:*)",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "Read(c:\\Users\\Lekhana\\Downloads/**)"
     ],
     "deny": [],
     "ask": []
