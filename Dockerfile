@@ -31,20 +31,14 @@ RUN apt-get update && apt-get install -y \
     xdg-utils \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy package files
+# Copy package files and install production dependencies
 COPY package*.json ./
+RUN npm ci --omit=dev
 
-# Install all dependencies (including dev dependencies for building)
-RUN npm ci
-
-# Copy source code
-COPY . .
-
-# Build the application
-RUN npm run build
-
-# Remove dev dependencies after build to reduce image size
-RUN npm prune --omit=dev
+# Copy the built application (pre-built locally)
+COPY dist ./dist/
+COPY backend-js ./backend-js/
+COPY server.js ./
 
 # Install Playwright browsers
 RUN npx playwright install chromium

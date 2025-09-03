@@ -2,9 +2,9 @@
 node_modules
 npm-debug.log*
 
-# Build artifacts
-dist
-backend-js
+# Build artifacts (we want to include these in Docker)
+# dist
+# backend-js
 
 # Git
 .git
