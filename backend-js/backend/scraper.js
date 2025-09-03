@@ -16,7 +16,10 @@ async function getBrowser() {
             ],
             timeout: 60000
         };
-        // Playwright handles browser installation automatically on Heroku
+        // Use Chrome installed by the buildpack on Heroku
+        if (process.env.DYNO) {
+            launchOptions.executablePath = process.env.CHROME_EXECUTABLE_PATH;
+        }
         browser = await chromium.launch(launchOptions);
     }
     return browser;
