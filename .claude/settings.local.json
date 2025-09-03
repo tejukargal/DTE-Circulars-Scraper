@@ -29,7 +29,9 @@
       "Bash(.redeploy-heroku.bat)",
       "Bash(cmd /c:*)",
       "Bash(timeout:*)",
-      "Read(c:\\Users\\Lekhana\\Downloads/**)"
+      "Read(c:\\Users\\Lekhana\\Downloads/**)",
+      "Bash(fly version:*)",
+      "Bash(C:UsersLekhana.flybinflyctl.exe version)"
     ],
     "deny": [],
     "ask": []

@@ -34,18 +34,21 @@ RUN apt-get update && apt-get install -y \
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
-
-# Install Playwright browsers
-RUN npx playwright install chromium
-RUN npx playwright install-deps chromium
+# Install all dependencies (including dev dependencies for building)
+RUN npm ci
 
 # Copy source code
 COPY . .
 
 # Build the application
 RUN npm run build
+
+# Remove dev dependencies after build to reduce image size
+RUN npm prune --omit=dev
+
+# Install Playwright browsers
+RUN npx playwright install chromium
+RUN npx playwright install-deps chromium
 
 # Create non-root user for security
 RUN useradd --create-home --shell /bin/bash app
