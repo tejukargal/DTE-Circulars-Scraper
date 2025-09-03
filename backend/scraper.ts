@@ -89,23 +89,31 @@ export async function scrapeUrl(url: string = 'https://dtek.karnataka.gov.in/inf
     
     browserInstance = await chromium.launch(launchOptions);
     page = await browserInstance.newPage();
-    page.setDefaultTimeout(20000);
+    page.setDefaultTimeout(10000);
     
     // Set user agent to avoid blocking
     await page.setExtraHTTPHeaders({
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
     });
     
-    // Try navigation with shorter timeout to work within Heroku's 30s limit
+    // Try navigation with aggressive timeouts to work within Heroku's 30s limit
     console.log('Attempting to navigate to:', url);
     try {
-      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 20000 });
+      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 15000 });
       console.log('Navigation successful');
     } catch (timeoutError) {
-      // If domcontentloaded times out, try with 'load' event with shorter timeout
       console.log('Domcontentloaded timeout, trying with networkidle...');
-      await page.goto(url, { waitUntil: 'networkidle', timeout: 15000 });
-      console.log('Navigation successful with networkidle');
+      try {
+        await page.goto(url, { waitUntil: 'networkidle', timeout: 10000 });
+        console.log('Navigation successful with networkidle');
+      } catch (networkIdleError) {
+        // Last resort: try with no wait
+        console.log('Networkidle timeout, trying with minimal wait...');
+        await page.goto(url, { waitUntil: 'commit', timeout: 8000 });
+        // Give it a moment to render some content
+        await page.waitForTimeout(2000);
+        console.log('Navigation completed with minimal wait');
+      }
     }
     
   } catch (error) {
@@ -117,7 +125,11 @@ export async function scrapeUrl(url: string = 'https://dtek.karnataka.gov.in/inf
     if (browserInstance) {
       try { await browserInstance.close(); } catch (e) { console.log('Error closing browser:', e); }
     }
-    throw new Error(`Failed to load page: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    if (errorMessage.includes('Timeout')) {
+      throw new Error(`Website is taking too long to respond. This might be due to slow server response or network issues. Please try again later.`);
+    }
+    throw new Error(`Failed to load page: ${errorMessage}`);
   }
 
   try {
