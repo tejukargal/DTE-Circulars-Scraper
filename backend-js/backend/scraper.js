@@ -19,9 +19,9 @@ async function getBrowser() {
             ],
             timeout: 90000
         };
-        // Use Chrome installed by the buildpack on Heroku
+        // Use Chrome installed by the Playwright buildpack on Heroku
         if (process.env.DYNO) {
-            launchOptions.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable';
+            launchOptions.executablePath = '/app/.playwright/chromium-1134/chrome-linux/chrome';
         }
         browser = await chromium.launch(launchOptions);
     }
@@ -49,9 +49,9 @@ export async function scrapeUrl(url = 'https://dtek.karnataka.gov.in/info-4/Depa
             ],
             timeout: 60000
         };
-        // Use Chrome installed by the buildpack on Heroku
+        // Use Chrome installed by the Playwright buildpack on Heroku
         if (process.env.DYNO) {
-            launchOptions.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable';
+            launchOptions.executablePath = '/app/.playwright/chromium-1134/chrome-linux/chrome';
         }
         browserInstance = await chromium.launch(launchOptions);
         page = await browserInstance.newPage();
@@ -60,16 +60,9 @@ export async function scrapeUrl(url = 'https://dtek.karnataka.gov.in/info-4/Depa
         await page.setExtraHTTPHeaders({
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         });
-        // Try navigation with longer timeout
+        // Try navigation with shorter timeout
         console.log('Attempting to navigate to:', url);
-        // Try with networkidle first, fallback to domcontentloaded if it times out
-        try {
-            await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
-        }
-        catch (navError) {
-            console.log('First attempt failed, trying with domcontentloaded...');
-            await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
-        }
+        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
         console.log('Navigation successful');
     }
     catch (error) {
@@ -204,23 +197,6 @@ export async function scrapeUrl(url = 'https://dtek.karnataka.gov.in/info-4/Depa
     }
     catch (error) {
         console.error('Scraping error:', error);
-        // Clean up resources
-        try {
-            if (page) {
-                await page.close();
-            }
-        }
-        catch (e) {
-            console.error('Error closing page:', e);
-        }
-        try {
-            if (browserInstance) {
-                await browserInstance.close();
-            }
-        }
-        catch (e) {
-            console.error('Error closing browser:', e);
-        }
         throw error;
     }
     finally {

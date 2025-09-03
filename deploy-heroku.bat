@@ -3,12 +3,11 @@ echo Creating Heroku app...
 heroku create dte-circulars-scraper
 
 echo Adding buildpacks...
-heroku buildpacks:set heroku/nodejs
-heroku buildpacks:add https://github.com/heroku/heroku-buildpack-google-chrome
+heroku buildpacks:add https://github.com/mxschmitt/heroku-playwright-buildpack
+heroku buildpacks:add heroku/nodejs
 
 echo Setting environment variables...
-heroku config:set PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
-heroku config:set PUPPETEER_EXECUTABLE_PATH=/app/.apt/usr/bin/google-chrome
+heroku config:set PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=true
 
 echo Adding files to git...
 git add .
