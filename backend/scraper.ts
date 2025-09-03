@@ -21,13 +21,9 @@ async function getBrowser(): Promise<Browser> {
       timeout: 60000
     };
 
-    // Use system Chromium in production environments
-    if (process.env.NODE_ENV === 'production') {
-      launchOptions.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || 
-        '/usr/bin/google-chrome-stable' || 
-        '/usr/bin/google-chrome' || 
-        '/usr/bin/chromium-browser' ||
-        '/usr/bin/chromium';
+    // Use system Chromium in production environments (Heroku, etc.)
+    if (process.env.NODE_ENV === 'production' || process.env.DYNO) {
+      launchOptions.executablePath = '/usr/bin/google-chrome-stable';
     }
 
     browser = await puppeteer.launch(launchOptions);
