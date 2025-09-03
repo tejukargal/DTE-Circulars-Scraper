@@ -1,7 +1,29 @@
 import { chromium, Browser, Page } from 'playwright';
 import type { ScrapedData } from '../src/types/index.js';
+import { execSync } from 'child_process';
 
 let browser: Browser | null = null;
+let browsersInstalled = false;
+
+async function ensureBrowsersInstalled(): Promise<void> {
+  if (browsersInstalled) return;
+  
+  try {
+    // Check if chromium browser is available
+    await chromium.executablePath();
+    browsersInstalled = true;
+  } catch (error) {
+    console.log('Installing Playwright browsers...');
+    try {
+      execSync('npx playwright install chromium', { stdio: 'inherit' });
+      browsersInstalled = true;
+      console.log('Playwright browsers installed successfully');
+    } catch (installError) {
+      console.error('Failed to install Playwright browsers:', installError);
+      throw installError;
+    }
+  }
+}
 
 async function getBrowser(): Promise<Browser> {
   if (!browser) {
@@ -36,6 +58,8 @@ export async function scrapeUrl(url: string = 'https://dtek.karnataka.gov.in/inf
   let page: Page | null = null;
 
   try {
+    // Ensure browsers are installed before attempting to launch
+    await ensureBrowsersInstalled();
     // Create a fresh browser instance for each scrape to avoid connection issues
     const launchOptions: any = {
       headless: true,

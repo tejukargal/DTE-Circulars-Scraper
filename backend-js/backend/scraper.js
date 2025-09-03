@@ -1,5 +1,28 @@
 import { chromium } from 'playwright';
+import { execSync } from 'child_process';
 let browser = null;
+let browsersInstalled = false;
+async function ensureBrowsersInstalled() {
+    if (browsersInstalled)
+        return;
+    try {
+        // Check if chromium browser is available
+        await chromium.executablePath();
+        browsersInstalled = true;
+    }
+    catch (error) {
+        console.log('Installing Playwright browsers...');
+        try {
+            execSync('npx playwright install chromium', { stdio: 'inherit' });
+            browsersInstalled = true;
+            console.log('Playwright browsers installed successfully');
+        }
+        catch (installError) {
+            console.error('Failed to install Playwright browsers:', installError);
+            throw installError;
+        }
+    }
+}
 async function getBrowser() {
     if (!browser) {
         const launchOptions = {
@@ -29,6 +52,8 @@ export async function scrapeUrl(url = 'https://dtek.karnataka.gov.in/info-4/Depa
     let browserInstance = null;
     let page = null;
     try {
+        // Ensure browsers are installed before attempting to launch
+        await ensureBrowsersInstalled();
         // Create a fresh browser instance for each scrape to avoid connection issues
         const launchOptions = {
             headless: true,
