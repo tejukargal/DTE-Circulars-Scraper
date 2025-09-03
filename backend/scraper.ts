@@ -89,17 +89,24 @@ export async function scrapeUrl(url: string = 'https://dtek.karnataka.gov.in/inf
     
     browserInstance = await chromium.launch(launchOptions);
     page = await browserInstance.newPage();
-    page.setDefaultTimeout(60000);
+    page.setDefaultTimeout(20000);
     
     // Set user agent to avoid blocking
     await page.setExtraHTTPHeaders({
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
     });
     
-    // Try navigation with shorter timeout
+    // Try navigation with shorter timeout to work within Heroku's 30s limit
     console.log('Attempting to navigate to:', url);
-    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
-    console.log('Navigation successful');
+    try {
+      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 20000 });
+      console.log('Navigation successful');
+    } catch (timeoutError) {
+      // If domcontentloaded times out, try with 'load' event with shorter timeout
+      console.log('Domcontentloaded timeout, trying with networkidle...');
+      await page.goto(url, { waitUntil: 'networkidle', timeout: 15000 });
+      console.log('Navigation successful with networkidle');
+    }
     
   } catch (error) {
     console.error('Browser setup or navigation failed:', error);
