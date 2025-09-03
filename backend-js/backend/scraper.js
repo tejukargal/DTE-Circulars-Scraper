@@ -19,10 +19,8 @@ async function getBrowser() {
             ],
             timeout: 90000
         };
-        // Use Chrome installed by the Playwright buildpack on Heroku
-        if (process.env.DYNO) {
-            launchOptions.executablePath = '/app/.playwright/chromium-1134/chrome-linux/chrome';
-        }
+        // Let Playwright use its bundled browser on Heroku
+        // No executablePath needed - Playwright will manage it
         browser = await chromium.launch(launchOptions);
     }
     return browser;
@@ -49,10 +47,8 @@ export async function scrapeUrl(url = 'https://dtek.karnataka.gov.in/info-4/Depa
             ],
             timeout: 60000
         };
-        // Use Chrome installed by the Playwright buildpack on Heroku
-        if (process.env.DYNO) {
-            launchOptions.executablePath = '/app/.playwright/chromium-1134/chrome-linux/chrome';
-        }
+        // Let Playwright use its bundled browser on Heroku
+        // No executablePath needed - Playwright will manage it
         browserInstance = await chromium.launch(launchOptions);
         page = await browserInstance.newPage();
         page.setDefaultTimeout(60000);
