@@ -23,7 +23,8 @@
       "Read(c:\\Users\\Lekhana\\Downloads/**)",
       "Bash(heroku:*)",
       "Bash(winget install:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Read(c:\\Users\\Lekhana\\Downloads/**)"
     ],
     "deny": [],
     "ask": []

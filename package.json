@@ -26,7 +26,7 @@
     "node": "18.x"
   },
   "config": {
-    "puppeteer_skip_chromium_download": "true"
+    "puppeteer_skip_chromium_download": "false"
   },
   "devDependencies": {
     "@types/cors": "^2.8.13",

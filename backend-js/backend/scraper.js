@@ -19,7 +19,8 @@ async function getBrowser() {
         };
         // Use system Chromium in production environments (Heroku, etc.)
         if (process.env.NODE_ENV === 'production' || process.env.DYNO) {
-            launchOptions.executablePath = '/usr/bin/google-chrome-stable';
+            // Don't set executablePath, let Puppeteer use bundled Chromium
+            // The buildpack should handle Chrome installation
         }
         browser = await puppeteer.launch(launchOptions);
     }
