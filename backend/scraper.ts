@@ -1,4 +1,4 @@
-import puppeteer, { Browser, Page } from 'puppeteer';
+import { chromium, Browser, Page } from 'playwright';
 import type { ScrapedData } from '../src/types/index.js';
 
 let browser: Browser | null = null;
@@ -17,14 +17,11 @@ async function getBrowser(): Promise<Browser> {
         '--disable-backgrounding-occluded-windows',
         '--disable-renderer-backgrounding'
       ],
-      protocolTimeout: 60000,
       timeout: 60000
     };
 
-    // Let Puppeteer and the buildpack handle Chrome automatically in production
-    // The Chrome for Testing buildpack will set up the environment correctly
-
-    browser = await puppeteer.launch(launchOptions);
+    // Playwright handles browser installation automatically on Heroku
+    browser = await chromium.launch(launchOptions);
   }
   return browser;
 }
@@ -36,10 +33,12 @@ export async function scrapeUrl(url: string): Promise<ScrapedData> {
   try {
     browserInstance = await getBrowser();
     page = await browserInstance.newPage();
-    await page.setDefaultTimeout(60000);
+    page.setDefaultTimeout(60000);
     
     // Set user agent to avoid blocking
-    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
+    await page.setExtraHTTPHeaders({
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    });
     
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
   } catch (error) {
@@ -54,11 +53,11 @@ export async function scrapeUrl(url: string): Promise<ScrapedData> {
 
   try {
     
-    // Use Puppeteer's built-in methods
+    // Use Playwright's built-in methods
     const title = await page.title();
     const pageUrl = page.url();
     
-    // Get page content using Puppeteer methods
+    // Get page content using Playwright methods
     let content = '';
     try {
       content = await page.evaluate(() => {
@@ -68,7 +67,7 @@ export async function scrapeUrl(url: string): Promise<ScrapedData> {
       console.log('Content extraction failed:', e);
     }
 
-    // Extract images using Puppeteer
+    // Extract images using Playwright
     const images: string[] = [];
     try {
       const imageUrls = await page.evaluate(() => {
@@ -88,7 +87,7 @@ export async function scrapeUrl(url: string): Promise<ScrapedData> {
       console.log('Image extraction failed:', e);
     }
 
-    // Extract links using Puppeteer
+    // Extract links using Playwright
     const links: Array<{text: string; href: string}> = [];
     try {
       const extractedLinks = await page.evaluate(() => {
