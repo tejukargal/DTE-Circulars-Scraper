@@ -21,10 +21,9 @@ async function getBrowser(): Promise<Browser> {
       timeout: 60000
     };
 
-    // Use system Chromium in production environments (Heroku, etc.)
+    // Use system Chrome in production environments (Heroku, etc.)
     if (process.env.NODE_ENV === 'production' || process.env.DYNO) {
-      // Don't set executablePath, let Puppeteer use bundled Chromium
-      // The buildpack should handle Chrome installation
+      launchOptions.executablePath = process.env.GOOGLE_CHROME_SHIM || '/usr/bin/google-chrome';
     }
 
     browser = await puppeteer.launch(launchOptions);
