@@ -89,29 +89,32 @@ export async function scrapeUrl(url: string = 'https://dtek.karnataka.gov.in/inf
     
     browserInstance = await chromium.launch(launchOptions);
     page = await browserInstance.newPage();
-    page.setDefaultTimeout(10000);
+    // Set more generous timeout for Fly.io (no 30s limit)
+    const timeout = process.env.NODE_ENV === 'production' ? 60000 : 10000;
+    page.setDefaultTimeout(timeout);
     
     // Set user agent to avoid blocking
     await page.setExtraHTTPHeaders({
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
     });
     
-    // Try navigation with aggressive timeouts to work within Heroku's 30s limit
+    // Use more generous timeouts for Fly.io deployment
+    const navTimeout = process.env.NODE_ENV === 'production' ? 45000 : 15000;
     console.log('Attempting to navigate to:', url);
     try {
-      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 15000 });
+      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: navTimeout });
       console.log('Navigation successful');
     } catch (timeoutError) {
       console.log('Domcontentloaded timeout, trying with networkidle...');
       try {
-        await page.goto(url, { waitUntil: 'networkidle', timeout: 10000 });
+        await page.goto(url, { waitUntil: 'networkidle', timeout: navTimeout - 15000 });
         console.log('Navigation successful with networkidle');
       } catch (networkIdleError) {
-        // Last resort: try with no wait
+        // Last resort: try with commit wait
         console.log('Networkidle timeout, trying with minimal wait...');
-        await page.goto(url, { waitUntil: 'commit', timeout: 8000 });
+        await page.goto(url, { waitUntil: 'commit', timeout: 20000 });
         // Give it a moment to render some content
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(3000);
         console.log('Navigation completed with minimal wait');
       }
     }

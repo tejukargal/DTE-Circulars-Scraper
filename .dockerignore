@@ -1,0 +1,49 @@
+# Dependencies
+node_modules
+npm-debug.log*
+
+# Build artifacts
+dist
+backend-js
+
+# Git
+.git
+.gitignore
+
+# Environment files
+.env.local
+.env.development
+.env.test
+.env.production
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs
+*.log
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage
+
+# Documentation
+README.md
+docs/
+
+# Heroku specific
+Procfile
+deploy-heroku.bat
+redeploy-heroku.bat
