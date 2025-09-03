@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc --project tsconfig.server.json --outDir backend-js && vite build",
     "preview": "vite preview",
     "server": "tsx backend/server.ts",
     "dev:full": "concurrently \"npm run dev\" \"npm run server\"",

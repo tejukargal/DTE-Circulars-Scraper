@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "./backend-js",
+    "rootDir": "./",
+    "module": "ESNext",
+    "target": "ES2020",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true
+  },
+  "include": ["backend/**/*"],
+  "exclude": ["node_modules", "backend-js", "dist"]
+}
