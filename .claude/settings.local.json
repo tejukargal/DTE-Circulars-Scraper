@@ -31,7 +31,8 @@
       "Bash(timeout:*)",
       "Read(c:\\Users\\Lekhana\\Downloads/**)",
       "Bash(fly version:*)",
-      "Bash(C:UsersLekhana.flybinflyctl.exe version)"
+      "Bash(C:UsersLekhana.flybinflyctl.exe version)",
+      "Read(c:\\Users\\Lekhana\\Downloads/**)"
     ],
     "deny": [],
     "ask": []
