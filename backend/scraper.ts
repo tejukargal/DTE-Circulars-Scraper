@@ -22,7 +22,7 @@ async function getBrowser(): Promise<Browser> {
 
     // Use Chrome installed by the buildpack on Heroku
     if (process.env.DYNO) {
-      launchOptions.executablePath = process.env.CHROME_EXECUTABLE_PATH;
+      launchOptions.executablePath = '/app/.chrome-for-testing/chrome-linux64/chrome';
     }
     
     browser = await chromium.launch(launchOptions);
