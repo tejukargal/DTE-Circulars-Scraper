@@ -7,20 +7,46 @@ async function getBrowser(): Promise<Browser> {
   if (!browser) {
     browser = await puppeteer.launch({ 
       headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+      args: [
+        '--no-sandbox', 
+        '--disable-setuid-sandbox', 
+        '--disable-dev-shm-usage',
+        '--disable-web-security',
+        '--disable-features=VizDisplayCompositor'
+      ],
+      protocolTimeout: 60000,
+      timeout: 60000
     });
   }
   return browser;
 }
 
 export async function scrapeUrl(url: string): Promise<ScrapedData> {
-  const browserInstance = await getBrowser();
-  const page: Page = await browserInstance.newPage();
+  let browserInstance: Browser;
+  let page: Page;
 
   try {
-    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    browserInstance = await getBrowser();
+    page = await browserInstance.newPage();
+    await page.setDefaultTimeout(60000);
     
-    // Use Playwright's built-in methods instead of page.evaluate
+    // Set user agent to avoid blocking
+    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
+    
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+  } catch (error) {
+    console.error('Browser setup or navigation failed:', error);
+    // Close browser and create new one if there's an error
+    if (browser) {
+      await browser.close();
+      browser = null;
+    }
+    throw new Error(`Failed to load page: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+
+  try {
+    
+    // Use Puppeteer's built-in methods
     const title = await page.title();
     const pageUrl = page.url();
     
@@ -77,18 +103,12 @@ export async function scrapeUrl(url: string): Promise<ScrapedData> {
     }
 
     // Extract metadata using Puppeteer
-    const metadata = await page.evaluate(() => {
-      const getMeta = (name: string) => {
-        const el = document.querySelector(`meta[name="${name}"], meta[property="${name}"], meta[property="og:${name}"]`);
-        return el ? el.getAttribute('content') : null;
-      };
-      return {
-        description: getMeta('description'),
-        keywords: getMeta('keywords'),
-        author: getMeta('author'),
-        publishDate: getMeta('article:published_time') || getMeta('date')
-      };
-    });
+    const metadata = {
+      description: undefined,
+      keywords: undefined,
+      author: undefined,
+      publishDate: undefined
+    };
 
     // Extract circulars from table using Puppeteer
     const circulars: Array<{title: string; link: string; date?: string; orderNo?: string}> = [];
@@ -139,8 +159,17 @@ export async function scrapeUrl(url: string): Promise<ScrapedData> {
     };
 
     return scrapedData;
+  } catch (error) {
+    console.error('Scraping error:', error);
+    throw error;
   } finally {
-    await page.close();
+    try {
+      if (page) {
+        await page.close();
+      }
+    } catch (e) {
+      console.error('Error closing page:', e);
+    }
   }
 }
 
