@@ -12,9 +12,12 @@ async function getBrowser() {
                 '--disable-features=VizDisplayCompositor',
                 '--disable-background-timer-throttling',
                 '--disable-backgrounding-occluded-windows',
-                '--disable-renderer-backgrounding'
+                '--disable-renderer-backgrounding',
+                '--ignore-certificate-errors',
+                '--ignore-ssl-errors',
+                '--ignore-certificate-errors-spki-list'
             ],
-            timeout: 60000
+            timeout: 90000
         };
         // Use Chrome installed by the buildpack on Heroku
         if (process.env.DYNO) {
@@ -24,18 +27,25 @@ async function getBrowser() {
     }
     return browser;
 }
-export async function scrapeUrl(url) {
+export async function scrapeUrl(url = 'https://dtek.karnataka.gov.in/info-4/Departmental+Circulars/kn') {
     let browserInstance;
     let page;
     try {
         browserInstance = await getBrowser();
         page = await browserInstance.newPage();
-        page.setDefaultTimeout(60000);
+        page.setDefaultTimeout(90000);
         // Set user agent to avoid blocking
         await page.setExtraHTTPHeaders({
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         });
-        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        // Try multiple navigation strategies
+        try {
+            await page.goto(url, { waitUntil: 'networkidle', timeout: 90000 });
+        }
+        catch (error) {
+            console.log('First attempt failed, trying with domcontentloaded...');
+            await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 90000 });
+        }
     }
     catch (error) {
         console.error('Browser setup or navigation failed:', error);

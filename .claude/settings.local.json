@@ -24,6 +24,7 @@
       "Bash(heroku:*)",
       "Bash(winget install:*)",
       "Bash(npm install:*)",
+      "Read(c:\\Users\\Lekhana\\Downloads/**)",
       "Read(c:\\Users\\Lekhana\\Downloads/**)"
     ],
     "deny": [],
