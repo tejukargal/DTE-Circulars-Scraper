@@ -1,12 +1,8 @@
-# Quick Deployment Guide - RECOMMENDED APPROACH
+# Quick Deployment Guide - FIXED DEPENDENCIES
 
-## 🚀 Deploy to Render (Easiest & Most Reliable)
+## 🚀 Deploy to Render (Recommended)
 
-**Render is the best option for this app** because:
-- ✅ Free tier supports Puppeteer
-- ✅ No timeout issues
-- ✅ Automatic Chrome installation
-- ✅ Simple configuration
+**Dependencies have been fixed!** The version conflicts are resolved.
 
 ### Steps:
 
@@ -21,7 +17,7 @@
    ```
    Name: dte-circulars-scraper
    Environment: Node
-   Build Command: npm install && npm run build
+   Build Command: npm install --legacy-peer-deps && npm run build
    Start Command: npm start
    ```
 
@@ -33,8 +29,15 @@
    ```
 
 5. **Deploy!** 🎉
-   - Should take ~3-4 minutes
+   - Should take ~4-5 minutes
    - Your app will be live at: `https://dte-circulars-scraper.onrender.com`
+
+## ✅ What Was Fixed:
+- ❌ Removed conflicting `chrome-aws-lambda` dependency
+- ❌ Removed `puppeteer-core` dependency conflict  
+- ✅ Clean `puppeteer@21.11.0` only
+- ✅ Added `--legacy-peer-deps` flag for build
+- ✅ Regenerated clean package-lock.json
 
 ---
 
