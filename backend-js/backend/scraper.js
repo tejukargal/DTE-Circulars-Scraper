@@ -6,20 +6,25 @@ async function ensureBrowsersInstalled() {
     if (browsersInstalled)
         return;
     try {
-        // Check if chromium browser is available
-        await chromium.executablePath();
+        // Try to launch a test browser to check if it works
+        const testBrowser = await chromium.launch({ headless: true });
+        await testBrowser.close();
         browsersInstalled = true;
+        console.log('Playwright browser is available');
     }
     catch (error) {
         console.log('Installing Playwright browsers...');
         try {
             execSync('npx playwright install chromium', { stdio: 'inherit' });
+            // Verify installation worked
+            const verifyBrowser = await chromium.launch({ headless: true });
+            await verifyBrowser.close();
             browsersInstalled = true;
             console.log('Playwright browsers installed successfully');
         }
         catch (installError) {
             console.error('Failed to install Playwright browsers:', installError);
-            throw installError;
+            throw new Error(`Browser installation failed: ${installError instanceof Error ? installError.message : 'Unknown error'}`);
         }
     }
 }
