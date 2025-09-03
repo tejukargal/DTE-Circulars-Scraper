@@ -23,7 +23,7 @@ async function getBrowser(): Promise<Browser> {
 
     // Use system Chrome in production environments (Heroku, etc.)
     if (process.env.NODE_ENV === 'production' || process.env.DYNO) {
-      launchOptions.executablePath = process.env.GOOGLE_CHROME_SHIM || '/usr/bin/google-chrome';
+      launchOptions.executablePath = process.env.CHROME_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable';
     }
 
     browser = await puppeteer.launch(launchOptions);
