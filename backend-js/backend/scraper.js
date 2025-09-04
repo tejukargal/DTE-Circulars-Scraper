@@ -53,7 +53,7 @@ async function getBrowser() {
     }
     return browser;
 }
-export async function scrapeUrl(url = 'https://dtek.karnataka.gov.in/info-4/Departmental+Circulars/kn') {
+async function attemptScrape(url, retryCount = 0) {
     let browserInstance = null;
     let page = null;
     try {
@@ -81,33 +81,37 @@ export async function scrapeUrl(url = 'https://dtek.karnataka.gov.in/info-4/Depa
         // No executablePath needed - Playwright will manage it
         browserInstance = await chromium.launch(launchOptions);
         page = await browserInstance.newPage();
-        // Set more generous timeout for Fly.io (no 30s limit)
-        const timeout = process.env.NODE_ENV === 'production' ? 60000 : 10000;
+        // Set more generous timeout for production (Heroku has 30s limit)
+        const timeout = process.env.NODE_ENV === 'production' ? 25000 : 10000;
         page.setDefaultTimeout(timeout);
         // Set user agent to avoid blocking
         await page.setExtraHTTPHeaders({
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         });
-        // Use more generous timeouts for Fly.io deployment
-        const navTimeout = process.env.NODE_ENV === 'production' ? 45000 : 15000;
+        // Use conservative timeouts for Heroku (30s total limit)
         console.log('Attempting to navigate to:', url);
+        
         try {
-            await page.goto(url, { waitUntil: 'domcontentloaded', timeout: navTimeout });
-            console.log('Navigation successful');
+            await page.goto(url, { waitUntil: 'commit', timeout: 8000 });
+            console.log('Navigation successful with commit');
+            
+            try {
+                await page.waitForSelector('table, body', { timeout: 5000 });
+                console.log('Content found after navigation');
+            } catch (e) {
+                console.log('No specific content found, continuing...');
+            }
         }
         catch (timeoutError) {
-            console.log('Domcontentloaded timeout, trying with networkidle...');
+            console.log('Commit timeout, trying with load...');
             try {
-                await page.goto(url, { waitUntil: 'networkidle', timeout: navTimeout - 15000 });
-                console.log('Navigation successful with networkidle');
+                await page.goto(url, { waitUntil: 'load', timeout: 12000 });
+                console.log('Navigation successful with load');
             }
-            catch (networkIdleError) {
-                // Last resort: try with commit wait
-                console.log('Networkidle timeout, trying with minimal wait...');
-                await page.goto(url, { waitUntil: 'commit', timeout: 20000 });
-                // Give it a moment to render some content
-                await page.waitForTimeout(3000);
-                console.log('Navigation completed with minimal wait');
+            catch (loadError) {
+                console.log('Load timeout, trying domcontentloaded...');
+                await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 8000 });
+                console.log('Navigation with domcontentloaded completed');
             }
         }
     }
@@ -269,6 +273,32 @@ export async function scrapeUrl(url = 'https://dtek.karnataka.gov.in/info-4/Depa
         }
     }
 }
+
+export async function scrapeUrl(url = 'https://dtek.karnataka.gov.in/info-4/Departmental+Circulars/kn', maxRetries = 2) {
+    let lastError = null;
+    
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+            console.log(`Scraping attempt ${attempt + 1}/${maxRetries + 1} for URL: ${url}`);
+            const result = await attemptScrape(url, attempt);
+            console.log(`Scraping successful on attempt ${attempt + 1}`);
+            return result;
+        } catch (error) {
+            lastError = error;
+            console.log(`Attempt ${attempt + 1} failed:`, error.message);
+            
+            if (attempt < maxRetries) {
+                const delay = Math.min(1000 * (attempt + 1), 3000);
+                console.log(`Waiting ${delay}ms before retry...`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+            }
+        }
+    }
+    
+    console.error(`All ${maxRetries + 1} attempts failed. Last error:`, lastError?.message);
+    throw lastError || new Error('Maximum retry attempts reached');
+}
+
 if (typeof process !== 'undefined') {
     process.on('SIGINT', async () => {
         if (browser) {

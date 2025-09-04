@@ -32,7 +32,9 @@
       "Read(c:\\Users\\Lekhana\\Downloads/**)",
       "Bash(fly version:*)",
       "Bash(C:UsersLekhana.flybinflyctl.exe version)",
-      "Read(c:\\Users\\Lekhana\\Downloads/**)"
+      "Read(c:\\Users\\Lekhana\\Downloads/**)",
+      "Bash(C:UsersLekhana.flybinflyctl.exe deploy)",
+      "Bash(rm:*)"
     ],
     "deny": [],
     "ask": []
