@@ -88,29 +88,33 @@ async function attemptScrape(url, retryCount = 0) {
         await page.setExtraHTTPHeaders({
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         });
-        // Use conservative timeouts for Heroku (30s total limit)
+        // Ultra-conservative timeouts for Heroku (25s total limit after browser setup)
         console.log('Attempting to navigate to:', url);
         
         try {
-            await page.goto(url, { waitUntil: 'commit', timeout: 8000 });
+            // Try the fastest option first
+            await page.goto(url, { waitUntil: 'commit', timeout: 6000 });
             console.log('Navigation successful with commit');
             
+            // Quick content check
             try {
-                await page.waitForSelector('table, body', { timeout: 5000 });
-                console.log('Content found after navigation');
+                await page.waitForSelector('table', { timeout: 3000 });
+                console.log('Table found after navigation');
             } catch (e) {
-                console.log('No specific content found, continuing...');
+                console.log('No table found, but continuing...');
             }
         }
-        catch (timeoutError) {
-            console.log('Commit timeout, trying with load...');
+        catch (commitError) {
+            console.log('Commit timeout, trying minimal approach...');
             try {
-                await page.goto(url, { waitUntil: 'load', timeout: 12000 });
+                // Last resort: just try to get to the page
+                await page.goto(url, { waitUntil: 'load', timeout: 8000 });
                 console.log('Navigation successful with load');
             }
             catch (loadError) {
-                console.log('Load timeout, trying domcontentloaded...');
-                await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 8000 });
+                // Final fallback
+                console.log('Load timeout, using domcontentloaded...');
+                await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 5000 });
                 console.log('Navigation with domcontentloaded completed');
             }
         }
@@ -274,12 +278,15 @@ async function attemptScrape(url, retryCount = 0) {
     }
 }
 
-export async function scrapeUrl(url = 'https://dtek.karnataka.gov.in/info-4/Departmental+Circulars/kn', maxRetries = 2) {
+export async function scrapeUrl(url = 'https://dtek.karnataka.gov.in/info-4/Departmental+Circulars/kn', maxRetries = 1) {
     let lastError = null;
     
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    // On Heroku, limit to 1 retry to stay within 30s timeout
+    const actualRetries = process.env.NODE_ENV === 'production' ? 1 : maxRetries;
+    
+    for (let attempt = 0; attempt <= actualRetries; attempt++) {
         try {
-            console.log(`Scraping attempt ${attempt + 1}/${maxRetries + 1} for URL: ${url}`);
+            console.log(`Scraping attempt ${attempt + 1}/${actualRetries + 1} for URL: ${url}`);
             const result = await attemptScrape(url, attempt);
             console.log(`Scraping successful on attempt ${attempt + 1}`);
             return result;
@@ -287,15 +294,16 @@ export async function scrapeUrl(url = 'https://dtek.karnataka.gov.in/info-4/Depa
             lastError = error;
             console.log(`Attempt ${attempt + 1} failed:`, error.message);
             
-            if (attempt < maxRetries) {
-                const delay = Math.min(1000 * (attempt + 1), 3000);
+            if (attempt < actualRetries) {
+                // Shorter delay for production to work within 30s limit
+                const delay = process.env.NODE_ENV === 'production' ? 500 : 1000 * (attempt + 1);
                 console.log(`Waiting ${delay}ms before retry...`);
                 await new Promise(resolve => setTimeout(resolve, delay));
             }
         }
     }
     
-    console.error(`All ${maxRetries + 1} attempts failed. Last error:`, lastError?.message);
+    console.error(`All ${actualRetries + 1} attempts failed. Last error:`, lastError?.message);
     throw lastError || new Error('Maximum retry attempts reached');
 }
 
