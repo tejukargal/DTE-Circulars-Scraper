@@ -75,9 +75,7 @@ async function attemptScrape(url, retryCount = 0) {
                 '--ignore-ssl-errors',
                 '--ignore-certificate-errors-spki-list'
             ],
-            timeout: 60000,
-            // Use system-installed Chromium if available (for Railway/Alpine)
-            executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined
+            timeout: 60000
         };
         // Let Playwright use its bundled browser on Heroku
         // No executablePath needed - Playwright will manage it

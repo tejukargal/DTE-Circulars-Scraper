@@ -35,6 +35,8 @@
       "Read(c:\\Users\\Lekhana\\Downloads/**)",
       "Bash(C:UsersLekhana.flybinflyctl.exe deploy)",
       "Bash(rm:*)",
+      "Read(c:\\Users\\Lekhana\\Downloads/**)",
+      "Read(c:\\Users\\Lekhana\\Downloads/**)",
       "Read(c:\\Users\\Lekhana\\Downloads/**)"
     ],
     "deny": [],

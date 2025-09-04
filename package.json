@@ -11,7 +11,8 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "typecheck": "tsc --noEmit",
     "start": "node server.js",
-    "build:production": "npm run build"
+    "build:production": "npm run build",
+    "postinstall": "npx playwright install chromium --with-deps || echo 'Playwright install failed, using bundled browser'"
   },
   "dependencies": {
     "cors": "^2.8.5",
