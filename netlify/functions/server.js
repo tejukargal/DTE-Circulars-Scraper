@@ -1,14 +1,7 @@
 // Simple scraping function for serverless environments
 async function simpleScrape(url) {
-  // Dynamically import node-fetch to avoid issues with different environments
-  let fetch;
-  try {
-    const fetchModule = await import('node-fetch');
-    fetch = fetchModule.default;
-  } catch (error) {
-    // Fallback if dynamic import fails
-    fetch = (await import('node-fetch')).default;
-  }
+  // Import node-fetch using CommonJS syntax for Netlify functions
+  const fetch = (await import('node-fetch')).default;
   
   try {
     // Fetch the page content
