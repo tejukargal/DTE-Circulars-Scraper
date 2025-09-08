@@ -1,0 +1,13 @@
+{
+  "name": "dte-circulars-scraper-function",
+  "version": "1.0.0",
+  "description": "Netlify function for DTE Circulars Scraper",
+  "main": "server.js",
+  "type": "module",
+  "dependencies": {
+    "node-fetch": "^3.3.2"
+  },
+  "engines": {
+    "node": "18.x"
+  }
+}
